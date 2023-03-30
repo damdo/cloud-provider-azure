@@ -57,8 +57,8 @@ func getTestProbe(protocol, path string, interval, servicePort, probePort, numOf
 }
 
 // getDefaultTestProbes returns dualStack probes.
-func getDefaultTestProbes(protocol, path string) map[bool][]network.Probe {
-	return getTestProbes(protocol, path, pointer.Int32(5), pointer.Int32(80), pointer.Int32(10080), pointer.Int32(2))
+func getDefaultTestProbes(protocol, path string, port int32) map[bool][]network.Probe {
+	return getTestProbes(protocol, path, pointer.Int32(5), pointer.Int32(80), pointer.Int32(port), pointer.Int32(2))
 }
 
 func TestFindProbe(t *testing.T) {
