@@ -21,36 +21,34 @@ import (
 	"fmt"
 	"os/exec"
 
-	acr "github.com/Azure/azure-sdk-for-go/services/containerregistry/mgmt/2019-05-01/containerregistry"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	acr "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry"
 
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/utils/pointer"
 )
 
 // CreateContainerRegistry creates a test acr
-func (tc *AzureTestClient) CreateContainerRegistry() (registry acr.Registry, err error) {
+func (tc *AzureTestClient) CreateContainerRegistry() (acr.Registry, error) {
 	acrClient := tc.createACRClient()
 	rgName, location := tc.GetResourceGroup(), tc.GetLocation()
 	acrName := "e2eacr" + string(uuid.NewUUID())[0:4]
 	template := acr.Registry{
-		Sku: &acr.Sku{
-			Name: "Basic",
-			Tier: "SkuTierBasic",
+		SKU: &acr.SKU{
+			Name: to.Ptr(acr.SKUNameBasic),
+			Tier: to.Ptr(acr.SKUTierBasic),
 		},
 		Name:     pointer.String(acrName),
 		Location: pointer.String(location),
 	}
 
 	Logf("Creating acr %s in resource group %s.", acrName, rgName)
-	future, err := acrClient.Create(context.Background(), rgName, acrName, template)
+	registry, err := acrClient.Create(context.Background(), rgName, acrName, template)
 	if err != nil {
 		return acr.Registry{}, err
 	}
-	err = future.WaitForCompletionRef(context.Background(), acrClient.Client)
-	if err != nil {
-		return acr.Registry{}, err
-	}
-	return future.Result(*acrClient)
+
+	return *registry, nil
 }
 
 // DeleteContainerRegistry deletes an existing acr
@@ -59,82 +57,15 @@ func (tc *AzureTestClient) DeleteContainerRegistry(registryName string) (err err
 	rgName := tc.GetResourceGroup()
 
 	Logf("Deleting acr %s in resource group %s.", registryName, rgName)
-	future, err := acrClient.Delete(context.Background(), rgName, registryName)
-	if err != nil {
-		return fmt.Errorf("failed to delete acr %s in resource group %s with error: %w", registryName, rgName, err)
-	}
-	err = future.WaitForCompletionRef(context.Background(), acrClient.Client)
+	err = acrClient.Delete(context.Background(), rgName, registryName)
 	if err != nil {
 		return fmt.Errorf("failed to delete acr %s in resource group %s with error: %w", registryName, rgName, err)
 	}
 	return nil
 }
 
-// DockerLogin execute the `docker login` if docker is available
-func DockerLogin(registryName string) (err error) {
-	authConfig, err := azureAuthConfigFromTestProfile()
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.Command("docker", "-v")
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("failed to execute docker command with error: %w", err)
-	}
-
-	Logf("Attempting Docker login with azure cred.")
-	arg0 := "--username=" + authConfig.AADClientID
-	arg1 := "--password=" + authConfig.AADClientSecret
-	cmd = exec.Command("docker",
-		"login",
-		arg0,
-		arg1,
-		registryName+".azurecr.io")
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("docker failed to login with error: %w", err)
-	}
-	Logf("Docker login success.")
-	return nil
-}
-
-// DockerLogout execute the `docker logout` if docker is available
-func DockerLogout() (err error) {
-	Logf("Docker logout.")
-	cmd := exec.Command("docker", "logout")
-	return cmd.Run()
-}
-
-// PushImageToACR pull an image from Docker Hub and push
-// it to the given azure container registry
-func PushImageToACR(registryName, image string) (tag string, err error) {
-	Logf("Pulling %s from Docker Hub.", image)
-	cmd := exec.Command("docker", "pull", image)
-	if err = cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed pulling %s with error: %w", image, err)
-	}
-
-	Logf("Tagging image.")
-	tagSuffix := string(uuid.NewUUID())[0:4]
-	registry := fmt.Sprintf("%s.azurecr.io/%s:e2e-%s", registryName, image, tagSuffix)
-	cmd = exec.Command("docker", "tag", image, registry)
-	if err = cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed tagging nginx image with error: %w", err)
-	}
-
-	Logf("Pushing image to ACR.")
-	cmd = exec.Command("docker", "push", registry)
-	if err = cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed pushing %s image to registry %s with error: %w", image, registryName, err)
-	}
-
-	Logf("Pushing image success.")
-	tag = fmt.Sprintf("e2e-%s", tagSuffix)
-	return tag, nil
-}
-
-// AZACRLogin does az login and then az acr login.
-func AZACRLogin(acrName string) (err error) {
-	authConfig, err := azureAuthConfigFromTestProfile()
+func AZACRLogin() (err error) {
+	authConfig, _, _, err := azureAuthConfigFromTestProfile()
 	if err != nil {
 		return err
 	}
@@ -156,27 +87,29 @@ func AZACRLogin(acrName string) (err error) {
 		return fmt.Errorf("az failed to account show with output: %s\n error: %w", string(output), err)
 	}
 	Logf("az account show success.")
-
-	Logf("Attempting az acr login with azure cred.")
-	cmd = exec.Command("az", "acr", "login",
-		"-n", acrName)
-	if output, err = cmd.Output(); err != nil {
-		return fmt.Errorf("az acr failed to login with output %s\n error: %w", string(output), err)
-	}
-	Logf("az acr login success.")
-
 	return nil
 }
 
-// AZLogout does az logout.
-func AZLogout() (err error) {
-	Logf("Attempting az logout.")
-	cmd := exec.Command("az", "logout")
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("az failed to logout with error: %w", err)
+// PushImageToACR pull an image from Docker Hub and push
+// it to the given azure container registry
+func (tc *AzureTestClient) PushImageToACR(registryName, image string) (string, error) {
+	acrClient := tc.createACRClient()
+	rgName := tc.GetResourceGroup()
+
+	err := acrClient.ImportImage(context.Background(), rgName, registryName, acr.ImportImageParameters{
+		Source: &acr.ImportSource{
+			RegistryURI: pointer.String("docker.io"),
+			SourceImage: pointer.String("library/" + image + ":latest"),
+		},
+		TargetTags: []*string{
+			to.Ptr(image + ":latest"),
+		},
+		Mode: to.Ptr(acr.ImportModeNoForce),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to import image %s from docker hub to acr %s with error: %w", image, registryName, err)
 	}
-	Logf("az logout success.")
-	return nil
+	return "latest", nil
 }
 
 // AZACRCacheCreate enables acr cache for a image.

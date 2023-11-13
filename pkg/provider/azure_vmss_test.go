@@ -52,9 +52,9 @@ const (
 	testVMSSName           = "vmss"
 	testVMPowerState       = "PowerState/Running"
 	testLBBackendpoolID0   = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Network/loadBalancers/lb/backendAddressPools/backendpool-0"
-	testLBBackendpoolID0v6 = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Network/loadBalancers/lb/backendAddressPools/backendpool-0" + "-" + v6Suffix
+	testLBBackendpoolID0v6 = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Network/loadBalancers/lb/backendAddressPools/backendpool-0" + "-" + consts.IPVersionIPv6String
 	testLBBackendpoolID1   = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Network/loadBalancers/lb/backendAddressPools/backendpool-1"
-	testLBBackendpoolID1v6 = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Network/loadBalancers/lb/backendAddressPools/backendpool-1" + "-" + v6Suffix
+	testLBBackendpoolID1v6 = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Network/loadBalancers/lb/backendAddressPools/backendpool-1" + "-" + consts.IPVersionIPv6String
 	testLBBackendpoolID2   = "/subscriptions/sub/resourceGroups/rg1/providers/Microsoft.Network/loadBalancers/lb/backendAddressPools/backendpool-2"
 )
 
@@ -62,7 +62,7 @@ func buildTestVMSSWithLB(name, namePrefix string, lbBackendpoolIDs []string, ipv
 	lbBackendpoolsV4, lbBackendpoolsV6 := make([]compute.SubResource, 0), make([]compute.SubResource, 0)
 	for _, id := range lbBackendpoolIDs {
 		lbBackendpoolsV4 = append(lbBackendpoolsV4, compute.SubResource{ID: pointer.String(id)})
-		lbBackendpoolsV6 = append(lbBackendpoolsV6, compute.SubResource{ID: pointer.String(id + "-" + v6Suffix)})
+		lbBackendpoolsV6 = append(lbBackendpoolsV6, compute.SubResource{ID: pointer.String(id + "-" + consts.IPVersionIPv6String)})
 	}
 	ipConfig := []compute.VirtualMachineScaleSetIPConfiguration{
 		{
@@ -787,10 +787,10 @@ func TestGetPowerStatusByNodeName(t *testing.T) {
 			expectedPowerState: "Running",
 		},
 		{
-			description:        "GetPowerStatusByNodeName should return vmPowerStateStopped when the vm.InstanceView.Statuses is nil",
+			description:        "GetPowerStatusByNodeName should return vmPowerStateUnknown when the vm.InstanceView.Statuses is nil",
 			vmList:             []string{"vmss-vm-000001"},
 			nilStatus:          true,
-			expectedPowerState: vmPowerStateStopped,
+			expectedPowerState: vmPowerStateUnknown,
 		},
 	}
 
@@ -2421,7 +2421,7 @@ func TestEnsureVMSSInPool(t *testing.T) {
 				},
 			},
 			isBasicLB:       false,
-			backendPoolID:   testLBBackendpoolID1 + "-" + v6Suffix,
+			backendPoolID:   testLBBackendpoolID1 + "-" + consts.IPVersionIPv6String,
 			clusterIP:       "fd00::e68b",
 			expectedPutVMSS: false,
 			expectedErr:     fmt.Errorf("failed to find a primary IP configuration (IPv6=true) for the VMSS VM or VMSS \"vmss\""),
@@ -2436,7 +2436,7 @@ func TestEnsureVMSSInPool(t *testing.T) {
 				},
 			},
 			isBasicLB:       false,
-			backendPoolID:   testLBBackendpoolID1 + "-" + v6Suffix,
+			backendPoolID:   testLBBackendpoolID1 + "-" + consts.IPVersionIPv6String,
 			setIPv6Config:   true,
 			clusterIP:       "fd00::e68b",
 			expectedPutVMSS: true,
@@ -2489,7 +2489,7 @@ func TestEnsureVMSSInPool(t *testing.T) {
 			expectedGetInstanceID: "invalid",
 		},
 		{
-			description: "ensureVMSSInPool should report an error if failed to get instsance ID",
+			description: "ensureVMSSInPool should report an error if failed to get instance ID",
 			nodes: []*v1.Node{
 				{},
 			},

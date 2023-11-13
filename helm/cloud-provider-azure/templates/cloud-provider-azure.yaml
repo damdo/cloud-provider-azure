@@ -7,13 +7,13 @@
 {{- else if eq .Capabilities.KubeVersion.Minor "24" -}}
   {{- $_ := set . "cloudProviderAzureVersion" "v1.24.22" }}
 {{- else if eq .Capabilities.KubeVersion.Minor "25" -}}
-  {{- $_ := set . "cloudProviderAzureVersion" "v1.25.18" }}
+  {{- $_ := set . "cloudProviderAzureVersion" "v1.25.19" }}
 {{- else if eq .Capabilities.KubeVersion.Minor "26" -}}
-  {{- $_ := set . "cloudProviderAzureVersion" "v1.26.14" }}
+  {{- $_ := set . "cloudProviderAzureVersion" "v1.26.15" }}
 {{- else if eq .Capabilities.KubeVersion.Minor "27" -}}
-  {{- $_ := set . "cloudProviderAzureVersion" "v1.27.8" }}
+  {{- $_ := set . "cloudProviderAzureVersion" "v1.27.9" }}
 {{- else if eq .Capabilities.KubeVersion.Minor "28" -}}
-  {{- $_ := set . "cloudProviderAzureVersion" "v1.28.0" }}
+  {{- $_ := set . "cloudProviderAzureVersion" "v1.28.1" }}
 {{- end -}}
 {{- if .Values.cloudControllerManager.enabled }}
 apiVersion: v1
@@ -293,6 +293,11 @@ spec:
             - name: msi
               mountPath: /var/lib/waagent/ManagedIdentity-Settings
               readOnly: true
+              {{- if .Values.cloudControllerManager.federatedTokenPath }}
+            - name: azure-identity-token
+              mountPath: {{ .Values.cloudControllerManager.federatedTokenPath }}
+              readOnly: true
+              {{ end }}
       volumes:
         - name: etc-kubernetes
           hostPath:
@@ -303,6 +308,16 @@ spec:
         - name: msi
           hostPath:
             path: /var/lib/waagent/ManagedIdentity-Settings
+        {{- if .Values.cloudControllerManager.federatedTokenPath }}
+        - name: azure-identity-token
+          projected:
+            defaultMode: 420
+            sources:
+              - serviceAccountToken:
+                  audience: api://AzureADTokenExchange
+                  expirationSeconds: 3600
+                  path: azure-identity-token
+        {{ end }}
 {{- end }}
 {{- if .Values.cloudNodeManager.enabled }}
 ---

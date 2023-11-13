@@ -18,10 +18,15 @@
 package azclient
 
 import (
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/accountclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/availabilitysetclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/blobcontainerclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/blobservicepropertiesclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/deploymentclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/diskclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/fileshareclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/interfaceclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/ipgroupclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/loadbalancerclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/managedclusterclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/privateendpointclient"
@@ -29,32 +34,49 @@ import (
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/privatezoneclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/publicipaddressclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/publicipprefixclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/registryclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/resourcegroupclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/routetableclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/secretclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/securitygroupclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/snapshotclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/sshpublickeyresourceclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/subnetclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/vaultclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/virtualmachineclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/virtualmachinescalesetclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/virtualmachinescalesetvmclient"
+	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/virtualnetworkclient"
 )
 
 type ClientFactory interface {
-	GetavailabilitysetclientInterface() availabilitysetclient.Interface
-	GetdeploymentclientInterface() deploymentclient.Interface
-	GetdiskclientInterface() diskclient.Interface
-	GetinterfaceclientInterface() interfaceclient.Interface
-	GetloadbalancerclientInterface() loadbalancerclient.Interface
-	GetmanagedclusterclientInterface() managedclusterclient.Interface
-	GetprivateendpointclientInterface() privateendpointclient.Interface
-	GetprivatelinkserviceclientInterface() privatelinkserviceclient.Interface
-	GetprivatezoneclientInterface() privatezoneclient.Interface
-	GetpublicipaddressclientInterface() publicipaddressclient.Interface
-	GetpublicipprefixclientInterface() publicipprefixclient.Interface
-	GetroutetableclientInterface() routetableclient.Interface
-	GetsecuritygroupclientInterface() securitygroupclient.Interface
-	GetsnapshotclientInterface() snapshotclient.Interface
-	GetsubnetclientInterface() subnetclient.Interface
-	GetvirtualmachineclientInterface() virtualmachineclient.Interface
-	GetvirtualmachinescalesetclientInterface() virtualmachinescalesetclient.Interface
-	GetvirtualmachinescalesetvmclientInterface() virtualmachinescalesetvmclient.Interface
+	GetAccountClient() accountclient.Interface
+	GetAvailabilitySetClient() availabilitysetclient.Interface
+	GetBlobContainerClient() blobcontainerclient.Interface
+	GetBlobServicePropertiesClient() blobservicepropertiesclient.Interface
+	GetDeploymentClient() deploymentclient.Interface
+	GetDiskClient() diskclient.Interface
+	GetFileShareClient() fileshareclient.Interface
+	GetInterfaceClient() interfaceclient.Interface
+	GetIPGroupClient() ipgroupclient.Interface
+	GetLoadBalancerClient() loadbalancerclient.Interface
+	GetManagedClusterClient() managedclusterclient.Interface
+	GetPrivateEndpointClient() privateendpointclient.Interface
+	GetPrivateLinkServiceClient() privatelinkserviceclient.Interface
+	GetPrivateZoneClient() privatezoneclient.Interface
+	GetPublicIPAddressClient() publicipaddressclient.Interface
+	GetPublicIPPrefixClient() publicipprefixclient.Interface
+	GetRegistryClient() registryclient.Interface
+	GetResourceGroupClient() resourcegroupclient.Interface
+	GetRouteTableClient() routetableclient.Interface
+	GetSecretClient() secretclient.Interface
+	GetSecurityGroupClient() securitygroupclient.Interface
+	GetSnapshotClient() snapshotclient.Interface
+	GetSSHPublicKeyResourceClient() sshpublickeyresourceclient.Interface
+	GetSubnetClient() subnetclient.Interface
+	GetVaultClient() vaultclient.Interface
+	GetVirtualMachineClient() virtualmachineclient.Interface
+	GetVirtualMachineScaleSetClient() virtualmachinescalesetclient.Interface
+	GetVirtualMachineScaleSetVMClient() virtualmachinescalesetvmclient.Interface
+	GetVirtualNetworkClient() virtualnetworkclient.Interface
 }

@@ -25,7 +25,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
-	armnetwork "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v3"
+	armnetwork "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	. "github.com/onsi/gomega"
 )
 
@@ -45,6 +45,13 @@ func init() {
 
 		poller, err := pipClient.BeginCreateOrUpdate(ctx, resourceGroupName, "pip1", armnetwork.PublicIPAddress{
 			Location: to.Ptr(location),
+			SKU: &armnetwork.PublicIPAddressSKU{
+				Name: to.Ptr(armnetwork.PublicIPAddressSKUNameStandard),
+				Tier: to.Ptr(armnetwork.PublicIPAddressSKUTierRegional),
+			},
+			Properties: &armnetwork.PublicIPAddressPropertiesFormat{
+				PublicIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodStatic),
+			},
 		}, nil)
 		Expect(err).NotTo(HaveOccurred())
 		resp, err := poller.PollUntilDone(ctx, &runtime.PollUntilDoneOptions{Frequency: 1 * time.Second})
@@ -61,6 +68,9 @@ func init() {
 						},
 					},
 				},
+			},
+			SKU: &armnetwork.LoadBalancerSKU{
+				Name: to.Ptr(armnetwork.LoadBalancerSKUNameStandard),
 			},
 		}
 	}

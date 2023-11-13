@@ -18,6 +18,7 @@ package etag_test
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"strings"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/policy/etag"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/utils"
 )
@@ -39,6 +41,9 @@ var _ = Describe("Etag", func() {
 					utils.FuncPolicyWrapper(
 						func(req *policy.Request) (*http.Response, error) {
 							Expect(req.Raw().Header.Get("If-Match")).To(Equal("etag"))
+							body, err := io.ReadAll(req.Body())
+							Expect(err).NotTo(HaveOccurred())
+							Expect(string(body)).To(Equal(`{"etag":"etag"}`))
 							return nil, nil
 						},
 					),
